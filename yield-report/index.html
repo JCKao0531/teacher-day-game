@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>良率報告生存戰</title>
+<meta name="description" content="半導體工程師上台報告良率異常，面對副總、協理、廠長與一整排處長經理的連番追問。大事化小、小事化無，活著下台。">
+<meta property="og:title" content="良率報告生存戰">
+<meta property="og:description" content="大事化小、小事化無。你能活著走下台嗎？">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1420; --bg2:#161e2e; --panel:#1b2436; --line:#2b3750;
+  --ink:#e8edf6; --mute:#8d9ab3; --dim:#5d6a84;
+  --heat:#ff5a4e; --cred:#33c7b0; --own:#f2b33d; --hl:#7cc4ff;
+  --slide:#f7f6f2; --slideInk:#1d2433; --corp:#163a6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% -10%,#22304a 0%,var(--bg) 60%)}
+#app{max-width:780px;margin:0 auto;padding:16px 16px 48px}
+button{font:inherit;cursor:pointer}
+.mono{font-family:"JetBrains Mono",monospace}
+
+/* title */
+.title-wrap{padding:40px 4px 8px;text-align:center}
+.kicker{font-size:12px;letter-spacing:.3em;color:var(--mute)}
+h1.game{font-size:clamp(34px,9vw,58px);font-weight:900;margin:6px 0 2px;letter-spacing:.04em;line-height:1.15}
+h1.game span{color:var(--heat)}
+.tag{color:var(--mute);margin:0 0 24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.rules{font-size:14px;color:#c7d0e0}
+.rules b{color:var(--ink)}
+.rules ul{padding-left:20px;margin:8px 0}
+.field{display:flex;gap:10px;align-items:center;margin:16px 0 6px;flex-wrap:wrap}
+.field input[type=text]{flex:1;min-width:140px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--mute);margin-top:8px}
+.btn{background:var(--heat);color:#fff;border:0;border-radius:12px;padding:13px 22px;font-weight:700;font-size:16px;letter-spacing:.05em;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.full{width:100%}
+.center{text-align:center}
+
+/* HUD */
+.hud{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 85%,transparent);padding:8px 0 10px}
+.stagebar{display:flex;gap:6px;margin-bottom:8px}
+.stagebar div{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.stagebar div.done{background:var(--cred)}
+.stagebar div.now{background:var(--own)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:12px}
+.stat label{display:flex;justify-content:space-between;color:var(--mute)}
+.bar{height:8px;background:var(--bg2);border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;transition:width .5s}
+.meta{grid-column:1/-1;display:flex;gap:14px;color:var(--mute);font-size:12px;flex-wrap:wrap}
+.meta b{color:var(--ink);font-weight:500}
+
+/* seats */
+.room{margin:6px 0 14px}
+.room-label{font-size:11px;color:var(--dim);letter-spacing:.2em;margin-bottom:6px;display:flex;justify-content:space-between}
+.seats{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.seat{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:5px 2px 4px;text-align:center;font-size:10px;line-height:1.25;color:var(--mute);transition:all .25s}
+.seat .av{font-size:17px;line-height:1.2}
+.seat .nm{color:#c7d0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seat.own{border-color:#6b5520}
+.seat.own .nm{color:var(--own)}
+.seat.talk{border-color:var(--hl);box-shadow:0 0 0 2px var(--hl),0 0 18px rgba(124,196,255,.45);background:#1f3150;transform:translateY(-2px)}
+.seat.talk.own{border-color:var(--own);box-shadow:0 0 0 2px var(--own),0 0 18px rgba(242,179,61,.45);background:#3a2e14}
+.seat .mad{position:absolute;top:-6px;right:-4px;font-size:12px}
+@media (max-width:560px){.seats{grid-template-columns:repeat(6,1fr)}}
+
+/* slide */
+.slide{background:var(--slide);color:var(--slideInk);border-radius:6px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.5),0 0 0 8px #0a0e16;margin:8px 0 18px}
+.slide .sh{background:var(--corp);color:#fff;padding:8px 14px;font-size:12px;display:flex;justify-content:space-between;gap:10px}
+.slide .sb{padding:16px 18px 10px}
+.slide h3{margin:0 0 10px;font-size:19px;color:var(--corp);border-bottom:3px solid #d7262e;display:inline-block;padding-bottom:2px}
+.slide ul{margin:0;padding-left:20px;font-size:14.5px}
+.slide li{margin:3px 0}
+.slide li.warn{color:#b3261e;font-weight:700}
+.slide .sf{font-size:10px;color:#8a8f99;padding:6px 14px;border-top:1px solid #e3e1da;display:flex;justify-content:space-between}
+.slide svg{width:100%;height:auto;display:block;margin:6px 0 4px}
+
+/* dialogue */
+.bubble{border-radius:14px;padding:12px 14px;margin:10px 0;position:relative;animation:pop .25s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.bubble .who{font-size:12px;color:var(--mute);margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.bubble .who b{color:var(--ink)}
+.bubble.q{background:#1f2c45;border:1px solid #2f4468}
+.bubble.q .txt{font-size:17px;font-weight:500}
+.bubble.me{background:#26313f;border:1px solid #3b4a5e;margin-left:28px}
+.bubble.own-help{background:#1d3a33;border:1px solid #2f6b5d}
+.bubble.own-stab{background:#43201f;border:1px solid #7d3532}
+.bubble.sys{background:transparent;border:1px dashed var(--line);color:var(--mute);font-size:14px;text-align:center}
+.chip{font-size:10px;padding:1px 7px;border-radius:999px;background:var(--line);color:var(--ink)}
+.chip.own{background:var(--own);color:#2a1d00}
+.chip.help{background:#2f6b5d}
+.chip.stab{background:#9a3a35}
+
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.opt{text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.55;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--hl);background:#202c43}
+.opt .k{color:var(--hl);font-family:"JetBrains Mono",monospace;margin-right:6px;font-weight:700}
+
+.timer{height:4px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:10px}
+.timer i{display:block;height:100%;background:var(--own);width:100%}
+
+.delta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px;font-size:13px}
+.delta span{padding:2px 9px;border-radius:999px;background:var(--bg2);border:1px solid var(--line)}
+.up-heat{color:var(--heat)} .dn-heat{color:var(--cred)}
+.up-cred{color:var(--cred)} .dn-cred{color:var(--heat)}
+.react{color:var(--mute);font-size:14px;margin:4px 0 0 4px}
+
+.stage-head{text-align:center;margin:22px 0 6px}
+.stage-head .n{font-size:12px;letter-spacing:.35em;color:var(--own)}
+.stage-head h2{margin:2px 0;font-size:28px;font-weight:900}
+.stage-head p{margin:0;color:var(--mute);font-size:14px}
+
+.end h2{font-size:34px;margin:6px 0;font-weight:900}
+.end .rank{display:inline-block;padding:4px 14px;border-radius:999px;font-weight:700;letter-spacing:.1em}
+.sumgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.sumgrid div{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.sumgrid b{display:block;font-size:22px;font-family:"JetBrains Mono",monospace}
+.sumgrid small{color:var(--mute);font-size:11px}
+.epi{color:#c7d0e0;font-size:14.5px}
+.foot{color:var(--dim);font-size:11px;text-align:center;margin-top:28px}
+.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;z-index:9}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+/* ---------- 人物 ---------- */
+const P = {
+  vp:     {n:'王副總', t:'副總',            e:'🧓'},
+  avp:    {n:'陳協理', t:'協理',            e:'👩‍💼'},
+  fab:    {n:'林廠長', t:'廠長',            e:'👷'},
+  qa_d:   {n:'周處長', t:'品保處 處長',      e:'🧐', d:'品保'},
+  pie_d:  {n:'吳處長', t:'製程整合處 處長',   e:'🤨', d:'製程整合'},
+  eq_d:   {n:'鄭處長', t:'設備處 處長',      e:'🔧', d:'設備'},
+  pc_d:   {n:'許處長', t:'生管處 處長',      e:'📦', d:'生管'},
+  cs_d:   {n:'蔡處長', t:'客戶工程處 處長',   e:'📞', d:'客戶工程'},
+  my_dm:  {n:'黃部經理', t:'蝕刻製程部 部經理', e:'😏', own:true},
+  qa_m:   {n:'劉部經理', t:'品保部 部經理',    e:'📋', d:'品保'},
+  eq_m:   {n:'楊部經理', t:'設備部 部經理',    e:'🛠️', d:'設備'},
+  ye_m:   {n:'謝部經理', t:'良率工程部 部經理', e:'📈', d:'良率工程'},
+  my_m:   {n:'張經理', t:'蝕刻製程 經理',     e:'😬', own:true},
+  litho_m:{n:'曾經理', t:'黃光 經理',        e:'🔦', d:'黃光'},
+  cvd_m:  {n:'江經理', t:'薄膜 經理',        e:'🧪', d:'薄膜'},
+  cmp_m:  {n:'簡經理', t:'CMP 經理',        e:'💿', d:'CMP'},
+  pc_m:   {n:'何經理', t:'生管 經理',        e:'🗓️', d:'生管'},
+  fa_m:   {n:'葉經理', t:'失效分析 經理',     e:'🔬', d:'失效分析'}
+};
+const SEAT_ORDER = ['vp','avp','fab','qa_d','pie_d','eq_d','pc_d','cs_d','my_dm','qa_m','eq_m','ye_m','my_m','litho_m','cvd_m','cmp_m','pc_m','fa_m'];
+
+/* 選項格式：[類型, 回答, 怒氣, 可信度, 部門關係, 額外]
+   類型 s=打太極 h=說實話 b=甩鍋 p=開支票 x=失言 ；額外 g=記仇對象 d=承諾債 */
+const STAGES = [
+{
+  name:'問題描述', sub:'先把「事情」講成「現象」',
+  slide:{title:'Falcon-28 W41 良率異常說明', chart:true, items:[
+    '產品：Falcon-28（28nm 邏輯）',
+    'W41 CP 良率 95.2% → 82.6%（−12.6%）',
+    '影響範圍：37 lots／約 900 片',
+    '失效型態：晶邊環狀分布，Bin 7（漏電）為主',
+    '目前狀態：已 Hold 12 lots，其餘「評估中」'
+  ]},
+  pool:[
+    {a:'vp', q:'掉了快 13 個點，為什麼今天才報上來？', o:[
+      ['s','W41 中旬就注意到趨勢，當時仍在統計波動範圍內，持續監控；今天是完整彙整後的第一次正式報告。',3,-3,0],
+      ['h','其實 W40 SPC 就跳警報了，但被我們部門 waive 掉。',22,8,-15],
+      ['b','生管一直催出貨，產線沒有空檔讓我們停下來分析。',6,-5,0,{g:'pc_d'}],
+      ['p','以後一定第一時間報，我保證！',8,-8,0,{d:1}]
+    ]},
+    {a:'fab', q:'37 個 lot，你說 Hold 了 12 個，剩下 25 個在哪？', o:[
+      ['s','其餘 lots 依風險分級處理，低風險依正常流程續流，目前沒有影響客戶的疑慮。',4,-4,0],
+      ['h','21 個續流了，另外 4 個……已經出貨給客戶。',25,10,-10],
+      ['b','放行是生管決定的，這部分可能要請何經理說明。',8,-6,0,{g:'pc_m'}],
+      ['p','我會後馬上全部 Hold 住！',-2,-6,0,{d:1}]
+    ]},
+    {a:'qa_d', q:'晶邊環狀分布，這個 pattern 以前發生過嗎？', o:[
+      ['s','晶邊失效屬於典型的製程邊緣效應，業界常見，我們有既定的處理經驗。',3,-3,0],
+      ['h','去年 Q3 同一台機台發生過一次，當時的 8D 到現在還沒結案。',20,8,-12],
+      ['b','黃光最近換了光阻，晶邊塗佈不均也可能造成類似 pattern。',6,-5,0,{g:'litho_m'}],
+      ['p','這個問題很有深度，我們會成立專案深入研究。',2,-8,0,{d:1}]
+    ]},
+    {a:'ye_m', q:'Bin 7 的 bin map 有沒有做 tool commonality？指到哪？', o:[
+      ['s','有做，結果顯示多個站點都有一定相關性，目前還在交叉比對。',4,-4,0],
+      ['h','做了，幾乎 100% 指向蝕刻 ET-07 的 Chamber C。',18,10,-15],
+      ['b','commonality 的原始資料是良率工程提供的，資料品質我們也有些疑慮。',10,-6,0,{g:'ye_m'}],
+      ['x','這個……我回去確認一下再回覆。',8,-7,0,{d:1}]
+    ]},
+    {a:'avp', q:'12.6% 換算下來損失多少錢？你算過嗎？', o:[
+      ['s','以目前 Hold 的數量估算，影響在可控範圍內，精確金額財務正在試算。',5,-3,0],
+      ['h','約 900 片 × 每片 3,200 美金 × 12.6%，大約 36 萬美金，還不含客退。',20,12,0],
+      ['s','如果扣掉原本就會掉的 baseline，真正的損失大概只有一半。',2,-8,0],
+      ['x','錢的部分……我不太清楚。',12,-10,0]
+    ]},
+    {a:'cmp_m', q:'晶邊問題，你們有排除 CMP edge over-polish 嗎？', o:[
+      ['s','CMP 初步看過沒有明顯異常，但也不排除，後續會一併確認。',2,-2,0],
+      ['h','有排除，CMP 沒問題。',8,5,-6],
+      ['b','其實 CMP 的可能性很高，晶邊磨太多是老問題了。',3,-4,0,{g:'cmp_m'}],
+      ['s','謝謝簡經理提醒，這是很好的方向！',0,-5,0]
+    ]}
+  ]
+},
+{
+  name:'事實查核', sub:'數據會說話，但你可以決定它說什麼',
+  slide:{title:'事實查核（Fact Check）', items:[
+    'Tool commonality：疑似相關站點 3 站（蝕刻／薄膜／CMP）',
+    'ET-07 Chamber C 於 W40 執行 PM',
+    'In-line defect scan：晶邊微粒數上升',
+    'FA 切片：Gate 側壁有殘留物（初步）',
+    '小結：多重因子交互作用，持續釐清中'
+  ]},
+  pool:[
+    {a:'fa_m', q:'FA 報告是我們做的，我寫的是「殘留物為蝕刻副產物」，你怎麼改成「初步」？', o:[
+      ['s','成分分析是單點取樣，統計代表性還不足，用「初步」比較嚴謹。',5,-3,0],
+      ['h','葉經理說得對，是蝕刻副產物，我修正。',18,10,-12],
+      ['b','FA 樣品只取了 2 片，取樣本身就有問題。',10,-5,0,{g:'fa_m'}],
+      ['p','我們再送 5 片加做 TEM，請葉經理協助。',-3,-4,0,{d:1}]
+    ]},
+    {a:'eq_d', q:'ET-07 做完 PM，seasoning 有沒有照 SOP 跑完？', o:[
+      ['s','復機流程都依系統紀錄執行，Qual 也都有 pass。',4,-6,0],
+      ['h','為了趕產能，seasoning 從 50 片縮成 10 片，是我們部門決定的。',24,12,-20],
+      ['b','PM 是設備部做的，交機給我們時就是這個狀態。',8,-6,0,{g:'eq_m'}],
+      ['x','這部分……可能要請張經理回答。',6,-4,-18]
+    ]},
+    {a:'cs_d', q:'我剛收到客戶 email，說他們 incoming 也看到異常，跟這個有關嗎？', o:[
+      ['s','目前還無法確認關聯性，會後我們跟客戶工程處一起對 lot ID。',4,-3,0],
+      ['h','有關，那 4 個出貨的 lot 就是這批。',22,10,-8],
+      ['b','客戶最近 incoming 標準調嚴，也可能是他們量測的問題。',12,-8,0],
+      ['p','我們可以先出一份 interim report 讓客戶安心。',-2,-5,0,{d:1}]
+    ]},
+    {a:'cvd_m', q:'commonality 怎麼會有薄膜？我們機台兩週零異常，你數據哪來的？', o:[
+      ['s','薄膜只是統計上的弱相關，列出來是為了完整性，並沒有指向薄膜有問題。',1,-2,0],
+      ['h','相關性其實很低，列進去是為了……讓結論看起來不要只有蝕刻。',16,6,-10],
+      ['b','數據就是這樣顯示，薄膜也應該自己檢討一下。',7,-6,0,{g:'cvd_m'}],
+      ['s','江經理息怒，會後我請你喝咖啡細聊。',3,-5,0]
+    ]},
+    {a:'qa_m', q:'OOC 發生時 OCAP 有沒有觸發？誰簽核放行的？', o:[
+      ['s','OCAP 有觸發，處置依系統流程完成，紀錄都可以在系統上查到。',5,-4,0],
+      ['h','有觸發，是張經理簽 waive 放行的。',15,8,-25],
+      ['b','品保部也有會簽權限，當時並沒有提出異議。',12,-5,0,{g:'qa_m'}],
+      ['p','簽核細節我會後提供完整紀錄。',6,-5,0,{d:1}]
+    ]},
+    {a:'pie_d', q:'你一直說「多重因子」，那主因到底是哪一個？給我一個答案。', o:[
+      ['s','以目前證據，蝕刻是權重相對較高的因子之一，但交互作用還需要 DOE 驗證。',6,-4,0],
+      ['h','主因是 ET-07 Chamber C。',18,10,-15],
+      ['b','主因是整合端的 process window 本來就太窄，任何小變動都會掉良率。',15,-6,0,{g:'pie_d'}],
+      ['p','我們下週給您明確答案。',0,-6,0,{d:1}]
+    ]}
+  ]
+},
+{
+  name:'機制建立與證明', sub:'把「可能」包裝成「應該」，把「應該」包裝成「已驗證」',
+  slide:{title:'失效機制與驗證', items:[
+    '假說：PM 後 chamber 未穩定 → 側壁聚合物殘留 → 晶邊漏電',
+    '驗證：Split test 2 lots（進行中）',
+    '模擬：TCAD 結果「趨勢一致」',
+    '相關性：R² = 0.41',
+    '機制成立可能性：高（工程判斷）'
+  ]},
+  pool:[
+    {a:'ye_m', q:'R² 才 0.41 你就說機制成立？這相關性很弱吧？', o:[
+      ['s','單看 R² 不高，但量產資料雜訊大，0.41 在 fab 資料裡已經具有工程意義。',4,-4,0],
+      ['h','對，很弱……而且是把 outlier 拿掉之後才有 0.41。',22,10,-8],
+      ['b','資料是良率工程撈的，篩選條件可能要再對一下。',10,-6,0,{g:'ye_m'}],
+      ['p','我們會擴大樣本到 100 片重算。',-1,-4,0,{d:1}]
+    ]},
+    {a:'avp', q:'split 兩個 lot 還沒跑完，你憑什麼今天說機制成立？', o:[
+      ['s','今天報的是「可能性高」，屬於工程判斷，正式結論會等 split 結果出來再更新。',3,-2,0],
+      ['h','其實是因為今天要報告，只好先寫成立。',25,6,-10],
+      ['b','split lot 被生管排在後面，我們也很無奈。',6,-5,0,{g:'pc_m'}],
+      ['p','split 結果下週三一定出來！',0,-4,0,{d:1}]
+    ]},
+    {a:'litho_m', q:'你的機制圖裡怎麼有黃光的光阻殘留？關我們什麼事？', o:[
+      ['s','光阻只是示意製程堆疊，不代表黃光是成因，我會把圖改清楚。',1,-2,0],
+      ['h','放上去是為了讓機制看起來複雜一點……',14,5,-6],
+      ['b','光阻殘留的可能性還沒完全排除，黃光也要提供數據。',7,-5,0,{g:'litho_m'}],
+      ['x','那是 TCAD 模型預設的，不是我畫的。',8,-8,0]
+    ]},
+    {a:'fab', q:'TCAD 是誰跑的？參數有校正過嗎？', o:[
+      ['s','參考過往已校正的模型，針對本案做參數微調，趨勢與實測一致。',4,-4,0],
+      ['h','我自己跑的，參數用的是預設值。',18,8,-5],
+      ['b','委託 PIE 跑的，參數細節要問他們。',8,-6,0,{g:'pie_d'}],
+      ['p','廠長有興趣的話，會後我 demo 給您看。',5,-3,0,{d:1}]
+    ]},
+    {a:'qa_d', q:'如果機制成立，就代表 PM 後 SOP 有漏洞，這是系統性問題，你同意嗎？', o:[
+      ['s','這比較像單一事件的執行落差，SOP 本身是完整的，我們會加強教育訓練。',3,-4,0],
+      ['h','同意，SOP 根本沒規定 seasoning 片數下限。',20,10,-10],
+      ['b','SOP 審核是品保負責的，有漏洞的話品保也要檢討。',14,-6,0,{g:'qa_d'}],
+      ['p','我們會成立跨部門 task force 全面檢視 SOP。',-2,-5,0,{d:1}]
+    ]},
+    {a:'eq_m', q:'你說 chamber 不穩，意思是我們設備 PM 做不好？', o:[
+      ['s','不是 PM 品質的問題，是 PM 後 chamber 需要更長的穩定時間，屬於製程窗口議題。',2,-3,0],
+      ['h','PM 沒問題，是我們自己把 seasoning 縮短。',18,10,-18],
+      ['b','PM 後 particle check 數據確實偏高，設備也要說明一下。',9,-5,0,{g:'eq_m'}],
+      ['s','楊部經理誤會了，我們兩個部門是一體的！',3,-4,0]
+    ]}
+  ]
+},
+{
+  name:'改善與預防', sub:'最後一哩：對策要聽起來很多，做起來很少',
+  slide:{title:'改善對策與預防措施', items:[
+    '短期：ET-07 Chamber C 停機，重新 Qual ✅',
+    '中期：PM 後 seasoning 片數「適度」增加',
+    '長期：導入 AI 智慧預警系統（規劃中）',
+    '受影響 lots：依風險評估「妥善處理」',
+    '目標：W45 良率恢復至 94%'
+  ]},
+  pool:[
+    {a:'pc_d', q:'Chamber C 停機，產能少 15%，W45 的出貨承諾誰負責？', o:[
+      ['s','A、B chamber 會分攤 loading，整體出貨影響有限，細節會後與生管對齊。',3,-3,0],
+      ['h','出貨會延遲大約 5 天，沒有辦法。',18,8,0],
+      ['b','當初就是生管催產能，我們才縮 seasoning 的。',10,-4,0,{g:'pc_d'}],
+      ['p','我們加班趕，絕對不影響出貨！',-3,-5,-8,{d:1}]
+    ]},
+    {a:'qa_m', q:'「適度增加」是增加多少？寫進 SOP 了沒？', o:[
+      ['s','會依 split 結果訂定最適片數，正式數字在下次 SOP 改版一併更新。',4,-3,0],
+      ['h','還沒寫，片數也還沒決定。',16,8,-5],
+      ['b','SOP 改版要品保審，流程比較慢。',10,-5,0,{g:'qa_m'}],
+      ['h','直接恢復到 50 片，明天生效。',2,4,-12]
+    ]},
+    {a:'pie_d', q:'AI 智慧預警系統？誰做？預算多少？什麼時候上線？', o:[
+      ['s','目前在概念階段，會先盤點現有 FDC 資料，可行性評估後再提出具體時程。',3,-3,0],
+      ['h','老實說，是寫上去讓簡報看起來有長期對策。',24,6,-8],
+      ['b','這要 IT 和 PIE 一起推，我們只是提出需求。',8,-5,0,{g:'pie_d'}],
+      ['p','Q1 上線！預算我們部門自己吸收！',-4,-8,-10,{d:2}]
+    ]},
+    {a:'cs_d', q:'已出貨的 4 個 lot，「妥善處理」是什麼意思？要主動通知客戶嗎？', o:[
+      ['s','我們會先跟客戶工程處內部評估風險等級，再決定溝通的時機與方式。',4,-4,0],
+      ['h','應該主動通知客戶，並啟動 RMA 流程。',16,12,-6],
+      ['s','客戶溝通是客戶工程處的權責，我們尊重處長的判斷。',6,-4,0],
+      ['p','我們可以先免費補貨給客戶。',-2,-6,0,{d:1}]
+    ]},
+    {a:'avp', q:'W45 恢復到 94%，你有幾成把握？做不到怎麼辦？', o:[
+      ['s','依目前對策的有效性評估，達成機率高；若有落差，會在週會即時回報。',3,-3,0],
+      ['h','大概五成把握。',18,10,0],
+      ['b','只要其他部門願意配合，應該沒問題。',10,-5,0],
+      ['p','做不到我負責！',-5,-6,0,{d:2}]
+    ]},
+    {a:'pc_m', q:'Hold 住的 12 個 lot 什麼時候能放？我下週要出貨。', o:[
+      ['s','split 結果出來後 24 小時內完成判定，盡量配合出貨時程。',2,-2,0],
+      ['h','可能一半以上要 scrap，下週出不了。',15,10,0],
+      ['b','要看品保怎麼判，我們只負責提供數據。',5,-4,0,{g:'qa_m'}],
+      ['p','明天全部放！',-4,-10,0,{d:2}]
+    ]}
+  ],
+  final:{a:'vp', final:true, q:'好，最後一個問題，我只問一次：這件事，到底是不是你們蝕刻部門自己造成的？', o:[
+    ['s','這是多重因子下的系統性議題，蝕刻是其中一環，我們會主動承擔改善責任。',2,-2,6],
+    ['h','是，是我們部門縮短 seasoning 造成的。',30,15,-25],
+    ['b','不完全是，設備、生管、品保都有關聯。',15,-8,0],
+    ['p','副總，下週我一定給您一個交代。',8,-8,0,{d:1}]
+  ]}
+}
+];
+
+/* 自己部門插話 */
+const HELP = [
+  ['my_m','補充一下，這部分我們會前已經跟品保初步對齊過了。',-8,0],
+  ['my_dm','這個議題我們部門負全責追蹤，我每週親自 review。',-10,3],
+  ['my_m','這位工程師這兩週天天加班，資料蒐集得很完整。',-6,2],
+  ['my_dm','副總，這部分細節比較多，建議會後我們部門另外跟您報告。',-10,0],
+  ['my_m','補充數據：昨天 split 初步看起來是正向的。',-7,3],
+  ['my_dm','（轉頭看副總）我們已經在處理了，請副總放心。',-6,0]
+];
+const STAB = [
+  ['my_m','呃……其實這件事我上週就有提醒過他了。',10,-5],
+  ['my_dm','這部分是工程師個人的判斷，部門還沒有 review 過。',12,-6],
+  ['my_m','我補充一下，當初我其實有建議多跑幾片 seasoning……',10,-4],
+  ['my_dm','{N}，你剛剛那個數字確定嗎？跟早上給我的不一樣喔。',12,-8],
+  ['my_m','（小聲，但麥克風沒關）……又要我收爛攤子。',8,-4],
+  ['my_dm','這份簡報我其實也是剛剛才第一次看到。',10,-6]
+];
+const REACT = {
+  s:['（點點頭，在筆記本上畫了個圈）','「嗯，那先這樣。」','（低頭滑手機，看起來沒在聽）','「好，下一個。」','（喝了一口咖啡，沒再追問）'],
+  h:['（會議室突然安靜下來）','「……你再說一次？」','（副總摘下眼鏡，揉了揉鼻樑）','（好幾個人同時開始抄筆記）','（有人倒抽一口氣）'],
+  b:['（被點名的部門臉色一沉）','「欸，這跟我們沒關係喔。」','（後排有人小聲說：又來了）','（你感覺到一道冰冷的視線）'],
+  p:['「好，我記下來了。」','（協理在筆記本上寫下日期，畫了底線）','「這是你說的喔。」'],
+  x:['（全場沉默三秒）','「……你到底有沒有準備？」','（廠長嘆了一口氣）']
+};
+
+/* ---------- 狀態 ---------- */
+let G, timerId=null;
+const $ = s=>document.querySelector(s);
+const app = $('#app');
+const rnd = a=>a[Math.floor(Math.random()*a.length)];
+const shuffle = a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function newGame(name,timed){
+  G={name:name||'小高',timed,stage:0,qi:0,queue:[],heat:10,cred:70,favor:10,debt:0,
+     honest:0,blame:0,smooth:0,promise:0,grudges:new Set(),talk:null,settled:false};
+}
+
+/* ---------- 畫面元件 ---------- */
+function hud(){
+  const fav = G.favor>=25?'麻吉':G.favor>=5?'普通':G.favor>-15?'冷淡':'準備陰你';
+  const stg = STAGES.map((s,i)=>`<div class="${i<G.stage?'done':i===G.stage?'now':''}"></div>`).join('');
+  return `<div class="hud">
+    <div class="stagebar">${stg}</div>
+    <div class="stats">
+      <div class="stat"><label><span>🔥 主管怒氣</span><span class="mono">${G.heat}</span></label><div class="bar"><i style="width:${G.heat}%;background:var(--heat)"></i></div></div>
+      <div class="stat"><label><span>🛡️ 報告可信度</span><span class="mono">${G.cred}</span></label><div class="bar"><i style="width:${G.cred}%;background:var(--cred)"></i></div></div>
+      <div class="meta"><span>部門關係 <b>${fav}</b></span><span>開出的支票 <b>📝×${G.debt}</b></span><span>記仇的人 <b>😠×${G.grudges.size}</b></span></div>
+    </div></div>`;
+}
+function room(){
+  const seats = SEAT_ORDER.map(id=>{const p=P[id];
+    const short = p.n.length>3?p.n.slice(0,1)+p.n.slice(-3):p.n;
+    return `<div class="seat ${p.own?'own':''} ${G.talk===id?'talk':''}" title="${p.t} ${p.n}">
+      ${G.grudges.has(id)?'<span class="mad">😠</span>':''}
+      <div class="av">${p.e}</div><div class="nm">${short}</div></div>`}).join('');
+  return `<div class="room"><div class="room-label"><span>會議室 A3 ・ 出席 ${SEAT_ORDER.length} 人</span><span style="color:var(--own)">■ 你的部門</span></div><div class="seats">${seats}</div></div>`;
+}
+function slideHTML(st){
+  const s=st.slide;
+  let chart='';
+  if(s.chart){
+    const ys=[95.1,95.4,94.9,95.2,94.6,82.6], wk=['W36','W37','W38','W39','W40','W41'];
+    const x=i=>40+i*64, y=v=>16+(97-v)*6.4;
+    const pts=ys.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+    chart=`<svg viewBox="0 0 400 130" aria-label="良率趨勢">
+      <line x1="30" y1="${y(90)}" x2="380" y2="${y(90)}" stroke="#d7262e" stroke-dasharray="4 3" stroke-width="1"/>
+      <text x="382" y="${y(90)+4}" font-size="9" fill="#d7262e" text-anchor="end" dy="-6">LCL 90%</text>
+      <polyline points="${pts}" fill="none" stroke="#163a6b" stroke-width="2.5"/>
+      ${ys.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="${i===5?5:3.5}" fill="${i===5?'#d7262e':'#163a6b'}"/><text x="${x(i)}" y="${y(v)-9}" font-size="10" text-anchor="middle" fill="#1d2433" font-family="JetBrains Mono">${v}</text><text x="${x(i)}" y="126" font-size="10" text-anchor="middle" fill="#6b7280">${wk[i]}</text>`).join('')}
+    </svg>`;
+  }
+  return `<div class="slide"><div class="sh"><span>Falcon-28 Yield Excursion Review</span><span>${G.stage+1}/4</span></div>
+    <div class="sb"><h3>${s.title}</h3>${chart}<ul>${s.items.map((t,i)=>`<li class="${s.chart&&i===1?'warn':''}">${t}</li>`).join('')}</ul></div>
+    <div class="sf"><span>Confidential ・ 蝕刻製程部</span><span>報告人：${esc(G.name)}</span></div></div>`;
+}
+
+/* ---------- 流程 ---------- */
+function titleScreen(){
+  stopTimer(); G=null;
+  app.innerHTML=`<div class="title-wrap">
+    <div class="kicker">FAB 12 ・ 週三 08:30 ・ 良率檢討會</div>
+    <h1 class="game">良率報告<span>生存戰</span></h1>
+    <p class="tag">大事化小，小事化無。活著走下台。</p></div>
+    <div class="card rules">
+      <p style="margin-top:0">你是蝕刻製程部的工程師。Falcon-28 良率一週掉了 <b>12.6%</b>，今天你要上台報告調查結果。台下坐著 <b>副總、協理、廠長、5 位處長、一整排部經理與經理</b>，共 18 人。</p>
+      <ul>
+        <li>四個關卡：<b>問題描述 → 事實查核 → 機制建立與證明 → 改善與預防</b></li>
+        <li>每關至少 <b>4 位主管</b>輪番發問，選出最能「掩蓋問題」的回答</li>
+        <li><b style="color:var(--heat)">主管怒氣</b>到 100 → 當場被請下台；<b style="color:var(--cred)">可信度</b>歸零 → 報告被打槍</li>
+        <li>說實話會讓會議室炸鍋；甩鍋會讓別人記仇；亂開支票，最後會被清算</li>
+        <li>你的 <b style="color:var(--own)">部經理和經理</b>隨時可能幫你補充……或背後補刀</li>
+      </ul>
+      <div class="field"><span>你的名字</span><input type="text" id="nm" maxlength="8" placeholder="小高" value=""></div>
+      <label class="toggle"><input type="checkbox" id="timed" checked> 限時模式（每題 20 秒，沉默也是一種回答）</label>
+    </div>
+    <div style="margin-top:18px"><button class="btn full" id="go">走上講台 ▶</button></div>
+    <div class="foot">本遊戲純屬虛構，如有雷同，請勿對號入座。</div>`;
+  $('#go').onclick=()=>{newGame($('#nm').value.trim(),$('#timed').checked);intro()};
+}
+function intro(){
+  G.talk=null;
+  app.innerHTML=hud()+room()+`
+    <div class="bubble sys">投影機風扇嗡嗡作響。你接上筆電，HDMI 試了三次才有畫面。</div>
+    <div class="bubble q"><div class="who"><span>${P.avp.e}</span><b>${P.avp.n}</b><span class="chip">${P.avp.t}</span></div><div class="txt">時間有限，直接開始吧。</div></div>
+    <div class="bubble own-help"><div class="who"><span>${P.my_m.e}</span><b>${P.my_m.n}</b><span class="chip own">你的經理</span></div>（小聲）等一下講重點就好，<b>不該講的不要講</b>。</div>
+    <button class="btn full" id="nx" style="margin-top:12px">開始報告</button>`;
+  $('#nx').onclick=startStage;
+}
+function startStage(){
+  const st=STAGES[G.stage];
+  // 記仇的人優先發問
+  const pool=shuffle(st.pool);
+  const pri=pool.filter(q=>G.grudges.has(q.a)).slice(0,2);
+  const rest=pool.filter(q=>!pri.includes(q));
+  let queue=shuffle(pri.concat(rest).slice(0,4));
+  // 記仇但這關沒題目的人 → 突襲
+  const holder=[...G.grudges].find(id=>!queue.some(q=>q.a===id));
+  if(holder){queue.splice(1+Math.floor(Math.random()*queue.length),0,ambush(holder))}
+  if(st.final) queue.push(st.final);
+  G.queue=queue; G.qi=0; G.talk=null; G.settled=false;
+  app.innerHTML=hud()+`<div class="stage-head"><div class="n">STAGE ${G.stage+1} / 4</div><h2>${st.name}</h2><p>${st.sub}</p></div>`+slideHTML(st)+
+    `<button class="btn full" id="nx">報告完畢，開放提問（${queue.length} 題）</button>`;
+  $('#nx').onclick=askQ;
+  window.scrollTo(0,0);
+}
+function ambush(id){
+  const p=P[id], d=p.d||'我們';
+  return {a:id, ambush:true, q:`剛剛你說是我們${d}的問題，我想請問一下，你有數據嗎？`, o:[
+    ['s',`我剛剛的意思是把${d}列為待排除因子，並沒有指向貴部門。`,4,-3,0],
+    ['h',`抱歉，是我講得不精確，這跟${d}無關。`,3,4,0],
+    ['p','有，會後我整理好寄給您。',12,-6,0,{d:1}],
+    ['x','（假裝沒聽到，切下一頁）',15,-8,0]
+  ]};
+}
+function askQ(){
+  if(G.qi>=G.queue.length) return stageClear();
+  const q=G.queue[G.qi];
+  if(q.final && G.debt>=3 && !G.settled){ G.settled=true; return reckoning(); }
+  G.talk=q.a; const p=P[q.a];
+  const opts=shuffle(q.o);
+  const tag=q.final?'<span class="chip" style="background:var(--heat)">最終題</span>':q.ambush?'<span class="chip stab">記仇追殺</span>':'';
+  app.innerHTML=hud()+room()+`
+    <div class="bubble q"><div class="who"><span>${p.e}</span><b>${p.n}</b><span class="chip">${p.t}</span>${tag}<span style="margin-left:auto" class="mono">${G.qi+1}/${G.queue.length}</span></div><div class="txt">${q.q}</div></div>
+    ${G.timed?'<div class="timer"><i id="tm"></i></div>':''}
+    <div class="opts">${opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="k">${'ABCD'[i]}</span>${o[1]}</button>`).join('')}</div>`;
+  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{stopTimer();answer(q,opts[+b.dataset.i])});
+  if(G.timed) startTimer(q);
+  $('.bubble.q').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function startTimer(q){
+  const T=20000, t0=Date.now(), bar=$('#tm');
+  bar.style.transition='none';bar.style.width='100%';
+  requestAnimationFrame(()=>{bar.style.transition=`width ${T}ms linear`;bar.style.width='0%'});
+  timerId=setTimeout(()=>{timerId=null;answer(q,['x','……（你沉默了 20 秒，會議室的冷氣聲特別清楚）',15,-6,0],true)},T);
+}
+function stopTimer(){ if(timerId){clearTimeout(timerId);timerId=null} }
+
+function apply(dh,dc,df){
+  G.heat=clamp(G.heat+dh,0,100); G.cred=clamp(G.cred+dc,0,100); G.favor=clamp(G.favor+(df||0),-50,50);
+}
+function answer(q,o,timeout){
+  const [type,text,dh,dc,df,ex={}]=o;
+  const p=P[q.a];
+  let notes=[];
+  let h=dh, c=dc;
+  if(G.grudges.has(q.a)&&!q.ambush){h+=6;notes.push(`（${p.n}顯然還記得你剛剛甩鍋給他）`)}
+  apply(h,c,df);
+  if(type==='h')G.honest++; if(type==='b')G.blame++; if(type==='s')G.smooth++; if(type==='p')G.promise++;
+  if(ex.d)G.debt+=ex.d;
+  if(q.ambush)G.grudges.delete(q.a);
+  let grudgeLine='';
+  if(ex.g&&!P[ex.g].own){G.grudges.add(ex.g);grudgeLine=`<div class="react">😠 ${P[ex.g].t} ${P[ex.g].n} 默默記住了你的名字。</div>`}
+  const totalH=h, totalC=c;
+  let react=rnd(REACT[type]);
+  // 部門插話
+  let inter='';
+  if(!q.final && !lost() && Math.random()<0.4){
+    const helpP=clamp(.5+G.favor/80,.12,.88);
+    const isHelp=Math.random()<helpP;
+    const line=rnd(isHelp?HELP:STAB); const sp=P[line[0]];
+    apply(line[2],line[3],0);
+    inter=`<div class="bubble ${isHelp?'own-help':'own-stab'}"><div class="who"><span>${sp.e}</span><b>${sp.n}</b><span class="chip own">你的部門</span><span class="chip ${isHelp?'help':'stab'}">${isHelp?'神救援':'背後補刀'}</span></div>${line[1].replace('{N}',esc(G.name))}
+      <div class="delta">${dTag('heat',line[2])}${dTag('cred',line[3])}</div></div>`;
+  }
+  G.qi++;
+  const done=lost();
+  app.innerHTML=hud()+room()+`
+    <div class="bubble q"><div class="who"><span>${p.e}</span><b>${p.n}</b><span class="chip">${p.t}</span></div><div class="txt">${q.q}</div></div>
+    <div class="bubble me"><div class="who"><span>🧑‍💻</span><b>${esc(G.name)}</b><span class="chip">你</span></div>${text}
+      <div class="delta">${dTag('heat',totalH)}${dTag('cred',totalC)}${ex.d?`<span>📝 支票 +${ex.d}</span>`:''}</div></div>
+    <div class="react">${p.n} ${react}</div>${notes.map(n=>`<div class="react">${n}</div>`).join('')}${grudgeLine}
+    ${inter}
+    <button class="btn full" id="nx" style="margin-top:14px">${done?'……':'下一位'}</button>`;
+  if(totalH>=15||done) app.classList.add('shake'), setTimeout(()=>app.classList.remove('shake'),400);
+  $('#nx').onclick=()=>done?ending(done):askQ();
+  $('#nx').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function dTag(k,v){
+  if(!v)return'';
+  const lbl=k==='heat'?'怒氣':'可信度';
+  const cls=k==='heat'?(v>0?'up-heat':'dn-heat'):(v>0?'up-cred':'dn-cred');
+  return `<span class="${cls}">${lbl} ${v>0?'+':''}${v}</span>`;
+}
+function lost(){ if(G.heat>=100)return'heat'; if(G.cred<=0)return'cred'; return null }
+function reckoning(){
+  G.talk='avp';
+  const add=G.debt*4; apply(add,-G.debt*2,0);
+  app.innerHTML=hud()+room()+`
+    <div class="bubble q"><div class="who"><span>${P.avp.e}</span><b>${P.avp.n}</b><span class="chip">${P.avp.t}</span><span class="chip stab">支票清算</span></div>
+    <div class="txt">等一下，在副總問最後一題之前——你今天一共承諾了 <b>${G.debt}</b> 件事，我全部都記下來了，會後我會一項一項追。</div>
+    <div class="delta">${dTag('heat',add)}${dTag('cred',-G.debt*2)}</div></div>
+    <button class="btn full" id="nx">${lost()?'……':'（吞了一下口水）'}</button>`;
+  const l=lost();
+  $('#nx').onclick=()=>l?ending(l):askQ();
+}
+function stageClear(){
+  G.talk=null; stopTimer();
+  const st=STAGES[G.stage];
+  if(G.stage===STAGES.length-1) return ending('win');
+  apply(-5,0,0);
+  app.innerHTML=hud()+room()+`<div class="stage-head"><div class="n">STAGE ${G.stage+1} CLEAR</div><h2>「${st.name}」過關</h2><p>你按下一頁。會議室稍微放鬆了一點（怒氣 −5）。</p></div>
+    <button class="btn full" id="nx">下一頁簡報 ▶</button>`;
+  $('#nx').onclick=()=>{G.stage++;startStage()};
+}
+function ending(kind){
+  stopTimer(); G.talk=null;
+  let title,rank,color,desc;
+  if(kind==='heat'){
+    title='被請下台';rank='GAME OVER';color='var(--heat)';
+    desc=`${P.vp.n}把筆一放：「夠了。這個案子品保處接手，<b>${esc(G.name)}</b> 下週一直接來我辦公室。」你在 ${G.stage+1} 關倒下。`;
+  }else if(kind==='cred'){
+    title='報告被打槍';rank='GAME OVER';color='var(--heat)';
+    desc=`${P.avp.n}：「這份報告沒有一句話我能相信。<b>全部重做</b>，週五再報一次。」你在 ${G.stage+1} 關倒下。`;
+  }else{
+    const cool=G.heat<45, trust=G.cred>=35;
+    if(cool&&trust){title='太極宗師';rank='S';color='var(--own)';desc=`${P.vp.n}看了看錶：「好，下一個議題。」你什麼都說了，也什麼都沒說。`}
+    else if(cool){title='滑溜泥鰍';rank='A';color='var(--cred)';desc='你安全下台，但每個人都覺得哪裡怪怪的，只是說不出來。'}
+    else if(trust){title='被列管的老實人';rank='B';color='var(--hl)';desc=`${P.vp.n}：「這個案子列入重點追蹤，<b>每週</b>來週會報進度。」`}
+    else {title='驚險過關';rank='C';color='var(--mute)';desc='你走下台時，手心全是汗。張經理拍拍你的肩：「還活著就好。」'}
+  }
+  const epi=[];
+  if(kind==='win'){
+    if(G.debt>=3)epi.push(`📝 你今天開出的 ${G.debt} 張支票，下週會一張一張回來找你。`);
+    if(G.grudges.size)epi.push(`😠 ${[...G.grudges].map(id=>P[id].n).join('、')}，這筆帳還沒算完。`);
+    if(G.honest>=4)epi.push('🫡 你說了好幾次實話。雖然很痛，但這是今天會議室裡最有價值的資訊。');
+    if(G.honest===0)epi.push('🤐 你一句實話都沒說。ET-07 Chamber C 還在線上跑貨。');
+    epi.push(rnd(['📉 W43，Falcon-28 良率又掉了 3%。','📧 會議結束 5 分鐘後，你收到一封標題為「Re: Re: Re: FW: 良率」的信。','☕ 你在茶水間聽到有人說：「剛剛那個報告講得真好，但到底講了什麼？」']));
+  }
+  app.innerHTML=`<div class="end center" style="padding-top:28px">
+    <span class="rank" style="background:${color};color:#111">${rank}</span>
+    <h2>${title}</h2><p class="epi">${desc}</p></div>
+    <div class="sumgrid">
+      <div><b style="color:var(--heat)">${G.heat}</b><small>最終怒氣</small></div>
+      <div><b style="color:var(--cred)">${G.cred}</b><small>可信度</small></div>
+      <div><b>${G.stage+(kind==='win'?1:0)}/4</b><small>過關數</small></div>
+      <div><b>${G.smooth}</b><small>打太極</small></div>
+      <div><b>${G.blame}</b><small>甩鍋</small></div>
+      <div><b>${G.honest}</b><small>說實話</small></div>
+    </div>
+    ${epi.length?`<div class="card epi">${epi.map(e=>`<p style="margin:4px 0">${e}</p>`).join('')}</div>`:''}
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button class="btn ghost" id="sh" style="flex:1">分享戰績</button>
+      <button class="btn" id="again" style="flex:1">再報告一次</button>
+    </div>
+    <div class="foot">本遊戲純屬虛構，如有雷同，請勿對號入座。</div>`;
+  $('#again').onclick=titleScreen;
+  $('#sh').onclick=()=>share(`我在《良率報告生存戰》拿到「${title}」（怒氣 ${G.heat}／可信度 ${G.cred}，說實話 ${G.honest} 次）。你能活著下台嗎？`);
+  window.scrollTo(0,0);
+}
+function share(text){
+  const url=location.href.split('#')[0];
+  if(navigator.share){navigator.share({title:'良率報告生存戰',text,url}).catch(()=>{});return}
+  const full=text+' '+url;
+  (navigator.clipboard?navigator.clipboard.writeText(full):Promise.reject()).then(()=>toast('已複製到剪貼簿'),()=>prompt('複製這段文字：',full));
+}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
+
+titleScreen();
+</script>
+</body>
+</html>
